@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+language: generic
+
+before_install:
+  - docker build -t jgddocker/multi-tests -f ./client/Dockerfile.dev ./client
+script:
+  - docker run -e CI=true jgddocker/multi-tests npm run test 
+  # - docker run jgddocker/multi-tests npm test -- --coverage
+
+after_success:
+  - docker build -t jgddocker/multi-client ./client
+  - docker build -t jgddocker/multi-nginx ./nginx
+  - docker build -t jgddocker/multi-server ./server
+  - docker build -t jgddocker/multi-worker ./worker
+  #log in to the docker CLI
+  - echo "$DOCKER_PWD" | docker login -u "$DOCKER_ID" --password-stdin
+  #take those images to push'em to dockerhub
+  - docker push jgddocker/multi-client
+  - docker push jgddocker/multi-nginx 
+  - docker push jgddocker/multi-server
+  - docker push jgddocker/multi-worker
